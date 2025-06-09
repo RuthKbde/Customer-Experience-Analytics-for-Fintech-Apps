@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os # Import the os module
 
 def preprocess_reviews(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -71,10 +72,14 @@ def preprocess_reviews(df: pd.DataFrame) -> pd.DataFrame:
     return df_cleaned
 
 if __name__ == "__main__":
-    raw_filename = "raw_reviews.csv"
-    cleaned_filename = "cleaned_reviews.csv"
+    # UPDATED: Use os.path.join to correctly reference file in the 'data' folder
+    raw_filename = os.path.join('data', "raw_reviews.csv")
+    cleaned_filename = os.path.join('data', "cleaned_reviews.csv") # Also update cleaned_filename to be in data folder
 
     try:
+        # Ensure the 'data' directory exists for output
+        os.makedirs(os.path.dirname(cleaned_filename), exist_ok=True)
+
         # Load the raw data
         raw_reviews_df = pd.read_csv(raw_filename)
         print(f"Loaded {len(raw_reviews_df)} raw reviews from {raw_filename}")
@@ -113,6 +118,6 @@ if __name__ == "__main__":
 
     except FileNotFoundError:
         print(f"Error: The file '{raw_filename}' was not found.")
-        print("Please ensure you have renamed your raw data file to 'raw_reviews.csv' in the project's root directory.")
+        print(f"Please ensure '{os.path.basename(raw_filename)}' exists in your '{os.path.dirname(raw_filename)}' folder.")
     except Exception as e:
         print(f"An unexpected error occurred during preprocessing: {e}")

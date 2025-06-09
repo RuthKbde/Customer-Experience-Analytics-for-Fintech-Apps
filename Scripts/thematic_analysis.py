@@ -2,6 +2,7 @@ import pandas as pd
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 import re
+import os # Import the os module
 
 # Load spaCy English model
 # You might need to download it first: python -m spacy download en_core_web_sm
@@ -116,8 +117,8 @@ def assign_themes(row: pd.Series) -> str:
     if any(phrase in review for phrase in neutral_general + neutral_functional + neutral_suggestions):
         # Only add if no strong positive or negative themes are already present
         if not set(themes).intersection(['Positive User Experience & Features', 'Excellent Customer Service', 
-                                          'App Performance & Stability Issues', 'Transaction & Account Issues', 
-                                          'Poor Customer Service', 'General Negative Feedback']):
+                                         'App Performance & Stability Issues', 'Transaction & Account Issues', 
+                                         'Poor Customer Service', 'General Negative Feedback']):
             themes.append('Neutral/Functional Feedback')
 
     # Fallback for reviews not caught by specific themes
@@ -128,10 +129,14 @@ def assign_themes(row: pd.Series) -> str:
 
 
 if __name__ == "__main__":
-    sentiment_data_filename = "reviews_with_sentiment.csv"
-    themed_output_filename = "reviews_with_themes.csv"
+    # UPDATED: Use os.path.join for correct file paths
+    sentiment_data_filename = os.path.join('data', "reviews_with_sentiment.csv")
+    themed_output_filename = os.path.join('data', "reviews_with_themes.csv")
 
     try:
+        # Ensure the 'data' directory exists for output
+        os.makedirs(os.path.dirname(themed_output_filename), exist_ok=True)
+
         # Load the data with sentiment scores
         df = pd.read_csv(sentiment_data_filename)
         print(f"Loaded {len(df)} reviews with sentiment from {sentiment_data_filename}")
@@ -141,8 +146,10 @@ if __name__ == "__main__":
         df['review_id'] = df.index # Using index as review_id
 
         # 2. Rename 'review' to 'review_text' for consistency with project output requirements
+        # Make sure this matches the column name from cleaned_reviews.csv
         df = df.rename(columns={'review': 'review_text'})
         print("Renamed 'review' column to 'review_text' and created 'review_id'.")
+
 
         # 3. Clean text for NLP (lemmatization, stop word removal, etc.)
         print("Cleaning text for thematic analysis (this may take a moment)...")
@@ -168,9 +175,10 @@ if __name__ == "__main__":
         print("Theme assignment complete.")
 
         # --- Final Output Preparation ---
-        # Select and reorder columns for the final output CSV as per project requirements
+        # UPDATED: Included 'date' and 'bank' columns in the final output
         final_output_df = df[[
-            'review_id', 'review_text', 'sentiment_label', 'sentiment_score', 'identified_theme(s)'
+            'review_id', 'review_text', 'sentiment_label', 'sentiment_score', 
+            'identified_theme(s)', 'date', 'bank' # ADDED: 'date' and 'bank'
         ]].copy()
 
         # Save the DataFrame with themes
@@ -208,6 +216,6 @@ if __name__ == "__main__":
 
     except FileNotFoundError:
         print(f"Error: The file '{sentiment_data_filename}' was not found.")
-        print("Please ensure 'reviews_with_sentiment.csv' exists after running sentiment_analysis.py.")
+        print(f"Please ensure '{os.path.basename(sentiment_data_filename)}' exists in your '{os.path.dirname(sentiment_data_filename)}' folder after running sentiment_analysis.py.")
     except Exception as e:
         print(f"An unexpected error occurred during thematic analysis: {e}")
